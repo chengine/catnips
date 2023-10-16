@@ -2,11 +2,13 @@ import time
         
 
 
-def class Planner():
+def class 
+():
     def __init__(self) -> None:
         pass        
         
-        self.spline_deg = configs['spline_deg']
+        # TODO: Not sure what this config is, but might have to change?
+        # self.spline_deg = configs['spline_deg']
 
         self.x0 = position_configs['start'][:3]
         self.xf = position_configs['end'][:3]
@@ -18,6 +20,7 @@ def class Planner():
         # Use method .get_traj and pass in an xf
 
         #TODO: Check if the trajectory is flipped
+        # TODO: Is this stull used?
         tnow = time.time()
         source = euc_to_index(self.grid, self.xf[:3], N=self.discretization, kernel=self.kernel)
         self.parental_field = create_parental_field(self.field, source)
@@ -26,7 +29,7 @@ def class Planner():
         ### Create the time points matrix/coefficients for the Bezier curve
         self.derivT = create_time_pts(deg=self.spline_deg)
 
-    def get_traj(self, x0, xf=None, N=20, save=False, save_dir=None, separate=False, derivs=None):
+    def get_traj(self, x0, xf=None, N=20, save=False, save_dir=None, separate=False, derivs=None, mpc=True):
         # Generate the Bezier trajectory with N samples per spline piece. 
         # NOTE: This assumes that xf at initialization is static.
 
@@ -34,6 +37,7 @@ def class Planner():
         self.x0 = x0[:3]
 
         ### GENERATING PATH INITIALIZATION
+        # TODO: Why is this using the initial conditions?
         target = euc_to_index(self.grid, self.x0[:3], N=self.discretization, kernel=self.kernel)
     
         tnow = time.time()
@@ -44,6 +48,7 @@ def class Planner():
         else:
             # If given a final position, simply perform raw A*
             self.xf = xf[:3]
+            # TODO: Why is the target named the source and the source named the target?
             source = euc_to_index(self.grid, self.xf[:3], N=self.discretization, kernel=self.kernel)
             traj, path = astar3D(self.field, source, target, self.feasible)
 
@@ -62,9 +67,15 @@ def class Planner():
         # Less conservative bounds
         occupied = (self.field == False)
 
-        bounds = get_bounds(self.cell_sizes, sorted_traj, occupied=occupied, feasible=self.feasible)
-        bounds = refine_bounds(bounds)
-        print(f'Got bounds: {time.time() - tnow}')
+        # TODO: Changing the bounds to use the new polytope-bounds for MPC
+        safe_corridor = Corridor()
+        if mpc:
+            A_list, B_list = safe_corridor.create_corridor(path, occupied)
+            print(f'Got polytope bounds:' {time.time() - tnow})
+        else:
+            bounds = get_bounds(self.cell_sizes, sorted_traj, occupied=occupied, feasible=self.feasible)
+            bounds = refine_bounds(bounds)
+            print(f'Got bounds: {time.time() - tnow}')
 
         tnow = time.time()
 
@@ -74,23 +85,29 @@ def class Planner():
             jerk0 = derivs['jerk0']
 
         try:
-            cntrl_pts, cost = get_b_spline(bounds, sorted_traj, self.derivT, self.x0, self.xf,
-                                v0=vel0, a0=accel0, j0=jerk0)
-            print(f'Calcualted B-spline: {time.time() - tnow}')
-            # print('Output cost', cost)
+            if mpc:
+                mpc_solver = MPC()
+                mpc_solver.init_dynamics()
+                states, control = mpc_solver.solve(A_list, B_list)
 
-            # tnow = time.time()
-            eval_pts = np.linspace(0., 1., N)
-            b_traj = eval_b_spline(eval_pts, cntrl_pts)
-            traj = np.concatenate(b_traj, axis=0)
-            # print(f'Evaluating B-spline: {time.time() - tnow}')
+            else:
+                cntrl_pts, cost = get_b_spline(bounds, sorted_traj, self.derivT, self.x0, self.xf,
+                                    v0=vel0, a0=accel0, j0=jerk0)
+                print(f'Calculated B-spline: {time.time() - tnow}')
+                # print('Output cost', cost)
 
-            self.data = {
-            'traj': traj.tolist(),
-            'traj_raw': traj.tolist(),
-            'coeffs': cntrl_pts.tolist(),
-            'cost': cost,
-            }
+                # tnow = time.time()
+                eval_pts = np.linspace(0., 1., N)
+                b_traj = eval_b_spline(eval_pts, cntrl_pts)
+                traj = np.concatenate(b_traj, axis=0)
+                # print(f'Evaluating B-spline: {time.time() - tnow}')
+
+                self.data = {
+                'traj': traj.tolist(),
+                'traj_raw': traj.tolist(),
+                'coeffs': cntrl_pts.tolist(),
+                'cost': cost,
+                }
 
             if save:
                 fp = save_dir

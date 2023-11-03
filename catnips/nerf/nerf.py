@@ -19,7 +19,9 @@ class NeRFWrapper():
 
             self.scale = meta["scale"]
             transform = meta["transform"]
-            self.transform = torch.tensor(transform, device=device, dtype=torch.float32)
+
+            self.transform = torch.eye(4).to(device)
+            self.transform[:3, :] = torch.tensor(transform)
 
         else: 
             self.scale = 1.
@@ -68,3 +70,6 @@ class NeRFWrapper():
         transformed_points = (self.transform[:3, :3].T @ transformed_points.T).T
 
         return transformed_points
+    
+    def get_exp_name(self):
+        return self.pipeline

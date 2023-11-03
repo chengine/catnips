@@ -1,38 +1,37 @@
 #%% 
 import numpy as np
 import torch
-from pathlib import Path
-import json
 from scipy.spatial.transform import Rotation as R
 
 #Import utilies
 from catnips.purr_utils import *
 
 # Ros imports
-import rospy
-from typing import Tuple
-from geometry_msgs.msg import PointStamped
+import rclpy
+
+#import rospy
+from geometry_msgs.msg import PointStamped          
 from geometry_msgs.msg import QuaternionStamped
-import os 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class CATNIPS_ROS:
+class CatnipsRos:
     def __init__(self, sub_topic):
         # Input Params
-        traj_name = rospy.get_param("catnips/traj_name")
+        # traj_name = rospy.get_param("catnips/traj_name")
         self.dt = 0.2
         # hold = rospy.get_param("catnips/hold")
         # laps = rospy.get_param("catnips/laps")
 
         self.catnips_init(0)
+        self.node = rclpy.create_node("catnips_node")
 
         # Publishers
-        self.pos_pub = rospy.Publisher("gcs/setpoint/position",PointStamped,queue_size=1)
-        self.att_pub = rospy.Publisher("gcs/setpoint/attitude",QuaternionStamped,queue_size=1)
+        self.pos_pub = self.node.create_publisher("gcs/setpoint/position", PointStamped, 10)
+        self.att_pub = self.node.create_publisher("gcs/setpoint/attitude", QuaternionStamped, 10)
 
         # Subscribers
-        self.pose_sub = rospy.Subscriber(sub_topic, PointStamped, self.update_current_pos)
+        self.pose_sub = self.node.create_subscriber(sub_topic, PointStamped, self.update_current_pos)
 
     def catnips_init(self, ind):
         # Ind: index of which trajectory start and end to use
@@ -125,6 +124,7 @@ class CATNIPS_ROS:
         pt_to_publish = points_far_away[0]
 
         # CREATING MESSAGE
+        # NOTE: self.node.get_time() or something
         t_now = rospy.Time.now()
 
         # Variables to publish
@@ -149,20 +149,24 @@ class CATNIPS_ROS:
         att_msg.quaternion.z = 0.
 
         # Publish
-        self.pos_pub.publish(pos_msg)
-        self.att_pub.publish(att_msg)
-   
-        if np.linalg.norm(self.x0[:3] - self.xf[:3]) < 0.1:
-            print("Mission Complete")
-            rospy.signal_shutdown("Reached Goal")
+        if np.linalg.norm(self.x0[:3] - self.xf[:3]) > 0.1:
+            self.pos_pub.publish(pos_msg)
+            self.att_pub.publish(att_msg)
 
     def update_current_pos(self, msg):
         self.x0 = np.array([msg.point.x, msg.point.y, msg.point.z])
 
 if __name__ == '__main__':
-    rospy.init_node('catnips_node')
-    sub_topic = '/drone2/mavros/vision_pose/'
-    catnips = CATNIPS_ROS(sub_topic=sub_topic)
+    # New code
+    rclpy.init()
 
-    rospy.Timer(rospy.Duration(catnips.dt), catnips.traj_out)
-    rospy.spin()
+    #
+    #rospy.init_node('catnips_node')
+    sub_topic_name = '/drone2/mavros/vision_pose/'
+    catnips = CatnipsRos(sub_topic_name=sub_topic_name)
+
+    rclpy.spin(catnips.node)
+    rclpy.shutdown()
+
+    #rospy.Timer(rospy.Duration(catnips.dt), catnips.traj_out)
+    #rospy.spin()

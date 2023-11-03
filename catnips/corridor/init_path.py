@@ -1,5 +1,5 @@
-import numpy as np
 import dijkstra3d
+import numpy as np
 
 # Perform coarse path planning
 def astar3D(field, source, target, feasible):
@@ -18,7 +18,7 @@ def chunk_path(path, num_sec):
     # Path: N x 3
     # num_sec: number of sections to split path into
 
-    # Returns list of subpaths [sp1, sp2,...]
+    # Returns path M x 3
 
     N_path = len(path)-1
 
@@ -26,47 +26,94 @@ def chunk_path(path, num_sec):
     path_no_start = path[1:]
 
     new_path = []
+    cat_path = None
 
     # 3 cases
     if N_path == num_sec:
         # No need to do anything. 
-        for (start, end) in zip(path_no_end, path_no_start):
-            sub_path = np.concatenate([start, end], axis=0)
+        # for (start, end) in zip(path_no_end, path_no_start):
+        #     sub_path = np.concatenate([start, end], axis=0)
 
-            new_path.append(sub_path.reshape(-1, 3))
+        #     new_path.append(sub_path.reshape(-1, 3))
+
+        cat_path = path
+        print('Request number of sections is equal to length of shortest path. Returning same path.')
         
     elif N_path < num_sec:
         # Need to interpolate points to match num_sections
         indices = np.arange(num_sec)
         split_indices = np.array_split(indices, N_path)
 
+        sub_paths = []
         for (start, end, sample_ind) in zip(path_no_end, path_no_start, split_indices):
-            t = np.linspace(0., 1., len(sample_ind), endpoint=True)
+            t = np.linspace(0., 1., len(sample_ind), endpoint=False)
             sub_path = np.reshape(start, (1, 3)) + t[:, None] * np.reshape(end - start, (1, 3))
 
-            new_path.append(sub_path.reshape(-1, 3))
-        
+            # Convert sub_path to list of paths
+            # sub_path_ = [np.concatenate([start_, end_], axis=0) for (start_, end_) in zip(sub_path[:-1], sub_path[1:])]
+
+            # new_path.extend(sub_path_)
+            sub_paths.append(sub_path)
+
+        cat_path = np.concatenate(sub_paths, axis=0)
+        cat_path = np.concatenate([cat_path, end[None]], axis=0)
+        print('Request number of sections is greater than length of shortest path. Interpolating path.')
+
     elif N_path > num_sec:
         # Undesirable condition, as the input path is already the shortest it can be. Raise an error asking
         # to bump up the number of sections. Return the path.
 
-        for (start, end) in zip(path_no_end, path_no_start):
-            sub_path = np.concatenate([start, end], axis=0)
+        # for (start, end) in zip(path_no_end, path_no_start):
+        #     sub_path = np.concatenate([start, end], axis=0)
 
-            new_path.append(sub_path.reshape(-1, 3))
+        #     new_path.append(sub_path.reshape(-1, 3))
 
+        cat_path = path
         print('Requested number of sections is less than the fewest amount of sections. Returning the path with fewest sections.')
     
     else:
         raise ValueError('Chunk Path function has error.')
 
-    return new_path
+    return cat_path
 
+def straight_splits(path, traj):
+    assert path.shape[0] == traj.shape[0]
+
+    sorted_traj = [traj[0]]
+
+    running_path = [path[0]]
+    running_traj = [traj[0]]
+    run_direction = path[1] - running_path[0]
+    running_path.append(path[1])
+    running_traj.append(traj[1])
+
+    for it, (index, pt) in enumerate(zip(path[2:], traj[2:])):
+        # Check if the current point is in the same direction
+        current_dir = index - running_path[-1]
+        metric = np.sum((current_dir - run_direction)**2)
+        if metric > 0:
+            # Direction has changed
+            sorted_traj.append(np.array(running_traj)[-1])
+
+            running_path = [running_path[-1], index]
+            running_traj = [running_traj[-1], pt]
+            run_direction = current_dir
+        else:
+            # Direction has not changed
+            running_path.append(index)
+            running_traj.append(pt)
+
+            if it == len(path[2:]) - 1:
+                sorted_traj.append(pt)
+
+    straight_traj = np.stack(sorted_traj, axis=0)
+
+    return straight_traj
 
 class PathInit():
     # Uses A* as path initialization
     def __init__(self, grid_occupied, grid_points) -> None:
-        self.grid_occupied = grid_occupied      # Binary Field (Nx x Ny x Nz)
+        self.grid_occupied = ~grid_occupied      # Binary Field (Nx x Ny x Nz)
         self.grid_points = grid_points          # Points corresponding to the field (Nx x Ny x Nz)
 
         self.cell_sizes = self.grid_points[1, 1, 1] - self.grid_points[0, 0, 0]
@@ -75,6 +122,15 @@ class PathInit():
         source = self.get_indices(x0)   # Find nearest grid point and find its index
         target = self.get_indices(xf)
 
+        source_occupied = self.grid_occupied[source[0], source[1], source[2]]
+        target_occupied = self.grid_occupied[target[0], target[1], target[2]]
+
+        if target_occupied:
+            raise ValueError('Target is in occupied voxel. Please choose another end point.')
+
+        if source_occupied:
+            raise ValueError('Source is in occupied voxel. Please choose another starting point.')
+        
         path3d, indices = astar3D(self.grid_occupied, source, target, self.grid_points)
 
         try:
@@ -82,37 +138,41 @@ class PathInit():
         except:
             raise AssertionError('Could not find a feasible initialize path. Please change the initial/final positions to not be in collision.')
 
-        path = self.fewest_straight_lines(path3d)
+        straight_path = straight_splits(indices, path3d)
+
+        path = self.fewest_straight_lines(path3d)       # Reduces the length of the A* path
 
         path = chunk_path(path, num_sec)
 
-        return path
+        # Remove first and last points, replace with original values
+        path = path[1:-1]
+        path = np.concatenate([x0.reshape(1, -1), path, xf.reshape(1, -1)])
+
+        return path, straight_path
 
     def get_indices(self, point):
         min_bound = self.grid_points[0, 0, 0] - self.cell_sizes/2
 
-        lx, ly, lz = self.cell_sizes
         transformed_pt = point - min_bound
 
-        indices = np.array([transformed_pt[0] / lx, 
-                            transformed_pt[1]/ ly, 
-                            transformed_pt[2]/lz])
+        indices = transformed_pt / self.cell_sizes
 
+        return_indices = indices.copy()
         # If querying points outside of the bounds, project to the nearest side
         for i, ind in enumerate(indices):
             if ind < 0.:
-                indices[i] = 0
+                return_indices[i] = 0
 
                 print('Point is outside of minimum bounds. Projecting to nearest side. This may cause unintended behavior.')
 
             elif ind > self.grid_occupied.shape[i]:
-                indices[i] = self.grid_occupied.shape[i]
+                return_indices[i] = self.grid_occupied.shape[i]
 
                 print('Point is outside of maximum bounds. Projecting to nearest side. This may cause unintended behavior.')
 
-        indices = indices.astype(np.uint32)
+        return_indices = return_indices.astype(np.uint32)
 
-        return indices
+        return return_indices
 
 
     # Process path so you have fewest number of straight line paths as possible
@@ -132,8 +192,13 @@ class PathInit():
             new_direction = (candidate - root) / np.linalg.norm(candidate-root, keepdims=True)
 
             if np.linalg.norm(new_direction - direction) < 1e-2:
-                # Going in a straight line, proceed to next iteration
-                continue
+                if candidate_index < len(path) - 1:
+                    # Going in a straight line, proceed to next iteration
+                    continue
+                else:
+                    # Corresponds to straight line path to the goal
+                    new_path.append(path[-1])
+                    break
 
             direction = new_direction
 

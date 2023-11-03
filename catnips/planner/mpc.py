@@ -100,10 +100,7 @@ def state2pose(x):
     return pose
 
 class MPC():
-    def __init__(self, x0, xf, N=40) -> None:
-        
-        self.x0 = x0
-        self.xf = xf
+    def __init__(self, N=40) -> None:
         self.N = N
 
         self.init_dynamics()
@@ -129,7 +126,7 @@ class MPC():
 
         self.model.setup()
 
-    def solve(self, As, Bs):
+    def solve(self, As, Bs, x0, xf):
 
         K = len(As)
         constraint_index = []
@@ -147,7 +144,7 @@ class MPC():
 
         mpc = do_mpc.controller.MPC(self.model)
         mpc.set_param(**setup_mpc)
-        # mpc.settings.supress_ipopt_output()
+        mpc.settings.supress_ipopt_output()
 
         ### For 9 D drone
         mterm = self.vel[0]**2 + self.vel[1]**2 + self.vel[2]**2
@@ -214,14 +211,20 @@ class MPC():
             final_pos
         )
 
-        mpc.nlp_cons_ub.append(self.xf[:3])
-        mpc.nlp_cons_lb.append(self.xf[:3])
+        mpc.nlp_cons_ub.append(xf[:3])
+        mpc.nlp_cons_lb.append(xf[:3])
 
         mpc.create_nlp()
         mpc.set_initial_guess()
 
         tnow = time.time()
-        _ = mpc.make_step(self.x0)
+        if len(x0) == 3:
+            start = np.zeros(9)
+            start[:3] = x0
+        else:
+            start = x0
+
+        _ = mpc.make_step(start)
         print('MPC Time: ', time.time() - tnow)
 
         states = mpc.data.prediction(('_x',)).squeeze().T

@@ -7,7 +7,7 @@ import time
 
 #Import utilies
 from nerf.nerf import NeRFWrapper
-from purr.purr import Catnips
+from baseline_grid.baseline_grid import BaselineGrid
 from corridor.init_path import PathInit
 from corridor.bounds import BoxCorridor, PolytopeCorridor
 from planner.spline_planner import SplinePlanner
@@ -17,12 +17,12 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # %%
 
 # Stonehenge
-# nerfwrapper = NeRFWrapper("./outputs/stonehenge/nerfacto/2023-10-26_111046")
-# exp_name = 'stonehenge'
+nerfwrapper = NeRFWrapper("./outputs/stonehenge/nerfacto/2023-10-26_111046")
+exp_name = 'stonehenge'
 
 # Statues
-nerfwrapper = NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")
-exp_name = 'statues'
+# nerfwrapper = NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")
+# exp_name = 'statues'
 
 # Flightroom
 # nerfwrapper = NeRFWrapper("./outputs/flightroom/nerfacto/2023-10-15_232532")
@@ -34,24 +34,18 @@ world_frame = False
 ### Catnips configs
 
 # Stonehenge
-# grid = np.array([
-#     [-1.4, 1.1],
-#     [-1.4, 1.1],
-#     [-0.1, 0.5]
-#     ])   
+grid = np.array([
+    [-1.4, 1.1],
+    [-1.4, 1.1],
+    [-0.1, 0.5]
+    ])   
 
 # Statues
 # grid = np.array([
 #     [-1., 1.],
-#     [-.1, .3],
-#     [-1., 1.]
+#     [-1, 1.],
+#     [-.5, .5]
 #     ])   
-
-grid = np.array([
-    [-1., 1.],
-    [-1, 1.],
-    [-.5, .5]
-    ])   
 
 # Flightroom
 # grid = np.array([
@@ -61,51 +55,47 @@ grid = np.array([
 #     ])   
 
 #Create robot body
-agent_body = .03*np.array([[-1, 1], [-1, 1], [-0.3, 0.3]])
+agent_body = .02*np.array([[-1, 1], [-1, 1], [-0.3, 0.3]])
 
 # #Configs
-sigma = 0.99
+cutoff = 1e3
 discretization = 150
 
-catnips_configs = {
+basegrid_configs = {
     'grid': grid,               # Bounding box of scene
     'agent_body': agent_body,   # Bounding box of agent in body frame
-    'sigma': sigma,             # chance of being below interpenetration vol.
-    'Aaux': 1e-8,               # area of auxiliary/reference particle
-    'dt': 1e-2,                 # depth of aux/ref particle
-    'Vmax': 5e-6,               # interpenetration volume
-    'gamma': 1.,                # occlusion threshold
+    'cutoff': cutoff,             # chance of being below interpenetration vol.
     'discretization': discretization,   # number of partitions per side of voxel grid
     'density_factor': 1,        # scaling factor to density
     'get_density': nerfwrapper.get_density  # queries NeRF to get density
 }
 
-catnips = Catnips(catnips_configs)      # Instantiate class
-catnips.load_purr()                     # MUST load details about the PURR
-catnips.create_purr()                 # Generates PURR voxel grid
-catnips.save_purr(f'./catnips_data/{exp_name}/purr/') #, transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale, save_property=True)
+basegrid = BaselineGrid(basegrid_configs)      # Instantiate class
+basegrid.load_basegrid()                     # MUST load details about the PURR
+basegrid.create_basegrid()                 # Generates PURR voxel grid
+basegrid.save_basegrid(f'./basegrid_data/{exp_name}/basegrid/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale, save_property=True)
 
-# catnips.create_pug(0.01, 0.99)
-# catnips.save_pug(f'./catnips_data/{exp_name}/purr/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale)
+# basegrid.create_basegrid_simple(1e3)
+# basegrid.save_basegrid_simple(f'./basegrid_data/{exp_name}/basegrid/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale)
 #%%
 
 # TODO: need to change occupied points to be vertices instead of centers for corridor generation (A* ok to use centers)
-occupied_vertices = catnips.purr_vertices
-astar_path = PathInit(catnips.purr, catnips.conv_centers)
+occupied_vertices = basegrid.basegrid_vertices
+astar_path = PathInit(basegrid.basegrid, basegrid.conv_centers)
 
 N_test = 100
 t = np.linspace(0, np.pi, N_test)
 num_sec = 20
 
 # Stonehenge
-# r = 1.12
-# dz = 0.05
-# center = np.array([-0.21, -0.132, 0.16])
+r = 1.12
+dz = 0.05
+center = np.array([-0.21, -0.132, 0.16])
 
 # Statues
-r = 0.475
-dz = 0.05
-center = np.array([-0.064, -0.0064, -0.025])
+# r = 0.475
+# dz = 0.05
+# center = np.array([-0.064, -0.0064, -0.025])
 
 # Flightroom
 # r = 2.6
@@ -121,7 +111,7 @@ xf = xf + center
 list_plan = []
 list_astar = []
 
-corridor = BoxCorridor(catnips.purr, catnips.conv_centers, r=0.1)
+corridor = BoxCorridor(basegrid.basegrid, basegrid.conv_centers, r=0.1)
 # planner = SplinePlanner(spline_deg=3, N_sec=10)
 planner = SplinePlanner() # MPC(N=40)
 
@@ -150,7 +140,7 @@ for it, (start, end) in enumerate(zip(x0, xf)):
         As, Bs, bounds = corridor.create_corridor(straight_path)    
         print('Elapsed', time.time() - tnow)
 
-        corridor.bounds2mesh(Bs, f'./catnips_data/{exp_name}/bounds/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale, i=it)
+        corridor.bounds2mesh(Bs, f'./basegrid_data/{exp_name}/bounds/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale, i=it)
 
         # Create dynamically feasible/smooth path
         # try:
@@ -181,7 +171,7 @@ data = {
     'astar': [plan.tolist() for plan in list_astar],
     }
 
-fp = f'catnips_data/{exp_name}/path.json'
+fp = f'basegrid_data/{exp_name}/path.json'
 with open(fp, "w") as outfile:
     json.dump(data, outfile, indent=4)
 

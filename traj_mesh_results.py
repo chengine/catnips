@@ -6,15 +6,17 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 import time
 
-name = 'stonehenge'
+name = 'statues'
 mesh_fp = f'{name}.ply'
 
 mesh_ = o3d.io.read_triangle_mesh(mesh_fp)
-mesh_ = mesh_.filter_smooth_taubin(number_of_iterations=100)
+# mesh_ = mesh_.filter_smooth_taubin(number_of_iterations=100)
 mesh = o3d.t.geometry.TriangleMesh.from_legacy(mesh_)
 
 # Create robot body
-r = 0.0289
+# r = 0.0289    # For Stonehenge
+r = 0.046   # For Statues and Flightroom
+
 X, Y, Z = np.meshgrid(
     np.linspace(-1., 1., 200, endpoint=True).astype(np.float32),
     np.linspace(-1., 1., 200, endpoint=True).astype(np.float32),
@@ -35,48 +37,57 @@ def volume_intersection_query(xyz):
     body_trans = body + xyz
     sdfs = sdf_query(body_trans)
     percent_intersect = np.sum(sdfs <= 0.) / body.shape[0]
-    print(np.sum(sdfs <= 0.), body.shape[0])
+    # print(np.sum(sdfs <= 0.), body.shape[0])
     return 4/3 * np.pi * (r**3) * percent_intersect
 
 method = 'catnips' # or baseline or nerfnav
-exp_name = 'stonehenge'
-fp = f'{method}/catnips_data/{exp_name}/path.json'
-with open(fp, 'r') as f:
-    meta = json.load(f)
+exp_name = name
 
-traj = meta['traj']
-traj = np.array(traj, dtype=np.float32)
+for sigma in ['95', '99']:
+    for vmax in ['5e-6', '1e-6', '1e-7']:
 
-sdfs = []
-vols = []
-for i, sub_traj in enumerate(traj):
-    # Each one is one trajectory with N points
-    sub_traj_sdf = []
-    sub_traj_vol = []
-    for pt in sub_traj:
-        sub_traj_sdf.append(sdf_query(pt.reshape(-1, 3)).squeeze())
-        sub_traj_vol.append(volume_intersection_query(pt))
+        fp = f'{method}/catnips_data/{exp_name}/{sigma}_{vmax}/path.json'
+        with open(fp, 'r') as f:
+            meta = json.load(f)
 
-    sub_traj_sdf = np.stack(sub_traj_sdf)
-    sub_traj_vol = np.stack(sub_traj_vol)
-    sdfs.append(sub_traj_sdf)
-    vols.append(sub_traj_vol)
+        traj = meta['traj']
 
-    print('Trajectory ', i)
-    raise
-sdfs = np.stack(sdfs, axis=0)
-vols = np.stack(vols, axis=0)    
+        sdfs = []
+        vols = []
+        for i, sub_traj in enumerate(traj):
+            # Each one is one trajectory with N points
+            sub_traj_sdf = []
+            sub_traj_vol = []
+            for pt in sub_traj:
+                pt = np.array(pt, dtype=np.float32)[:3]
 
-# %%
-save_fp = f'results_processed/{method}/{exp_name}'
-if not os.path.exists(save_fp):
-    # Create a new directory because it does not exist
-    os.makedirs(save_fp)
+                sdf = sdf_query(pt.reshape(-1, 3)).squeeze().tolist()
+                sub_traj_sdf.append(sdf)
 
-data = {
-    'sdfs': sdfs.tolist(),
-    'vols': vols.tolist()
-}
+                if sdf >= r:
+                    vol_inter = 0.
+                else:
+                    vol_inter = volume_intersection_query(pt)
+                sub_traj_vol.append(vol_inter)
 
-with open(save_fp + '/data.json', 'w') as f:
-    json.dump(data, f, indent=4)
+            # sub_traj_sdf = np.stack(sub_traj_sdf)
+            # sub_traj_vol = np.stack(sub_traj_vol)
+            sdfs.append(sub_traj_sdf)
+            vols.append(sub_traj_vol)
+
+            print('Trajectory ', i)
+        # sdfs = np.stack(sdfs, axis=0)
+        # vols = np.stack(vols, axis=0)    
+
+        save_fp = f'results_processed/{method}/{exp_name}/{sigma}_{vmax}'
+        if not os.path.exists(save_fp):
+            # Create a new directory because it does not exist
+            os.makedirs(save_fp)
+
+        data = {
+            'sdfs': sdfs,
+            'vols': vols
+        }
+
+        with open(save_fp + '/data.json', 'w') as f:
+            json.dump(data, f, indent=4)

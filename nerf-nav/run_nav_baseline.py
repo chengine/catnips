@@ -177,7 +177,7 @@ with open(astar_fp, 'r') as f:
 astar_paths = [nerfwrapper.data_frame_to_ns_frame(torch.tensor(astar).to(device, dtype=torch.float32)).squeeze().cpu() for astar in meta['astar']]
 astar_counter = 0
 
-penalties = [1e2, 1e3, 1e4]
+penalties = [1e4]
 for penalty in penalties:
     planner_cfg['penalty'] = penalty
     for it, (start, end) in enumerate(zip(x0, xf)):

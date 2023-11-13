@@ -1,13 +1,10 @@
 import torch
-from torch._C import device
 import numpy as np
 import json
 import time
-import dijkstra3d
-import matplotlib.pyplot as plt
 
 from .math_utils import rot_matrix_to_vec
-from .quad_helpers import astar, next_rotation
+from .quad_helpers import next_rotation
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -24,10 +21,10 @@ class Planner:
         self.fade_out_sharpness = cfg['fade_out_sharpness']
         self.mass               = cfg['mass']
         self.J                  = cfg['I']
-        self.g                  = torch.tensor([0., 0., -cfg['g']])
+        self.g                  = torch.tensor([0., 0., -cfg['g']]).to(device)
         self.body_extent        = cfg['body']
         self.body_nbins         = cfg['nbins']
-        self.astar_func               = cfg['astar_func']
+        self.astar              = cfg['astar']
 
         self.penalty            = cfg['penalty']
 
@@ -39,13 +36,13 @@ class Planner:
         #             slider  * self.full_to_reduced_state(end_state)
 
         # self.states = states.clone().detach().requires_grad_(True)
-        self.initial_accel = torch.tensor([cfg['g'], cfg['g']]).requires_grad_(True)
+        self.initial_accel = torch.tensor([cfg['g'], cfg['g']]).to(device).requires_grad_(True)
 
         #PARAM this sets the shape of the robot body point cloud
         body = torch.stack( torch.meshgrid( torch.linspace(self.body_extent[0, 0], self.body_extent[0, 1], self.body_nbins[0]),
                                             torch.linspace(self.body_extent[1, 0], self.body_extent[1, 1], self.body_nbins[1]),
                                             torch.linspace(self.body_extent[2, 0], self.body_extent[2, 1], self.body_nbins[2])), dim=-1)
-        self.robot_body = body.reshape(-1, 3)
+        self.robot_body = body.reshape(-1, 3).to(device)
 
         self.epoch = 0
 
@@ -60,19 +57,19 @@ class Planner:
 
     def a_star_init(self):
         # TODO: IMPLEMENT A* HERE
-        path = self.astar_func(self.start_state[:3].cpu().numpy())
-        path_skip = path.shape[0] // 32
-        path = np.concatenate([path[:-1][::path_skip], [path[-1]]], axis=0)
+        path = self.astar
+        # path_skip = path.shape[0] // 32
+        # path = np.concatenate([path[:-1][::path_skip], [path[-1]]], axis=0)
         self.steps = path.shape[0]
         self.dt = self.T_final / self.steps
 
         path = torch.tensor(path, dtype=torch.float32)
-        path = torch.flip(path, [0])
+   
         #Diff. flat outputs (x,y,z,yaw)
         states = torch.cat( [path, torch.zeros( (path.shape[0], 1) ) ], dim=-1)
 
         #prevents weird zero derivative issues
-        randomness = torch.normal(mean= 0, std=0.001*torch.ones(states.shape) )
+        randomness = torch.normal(mean= 0, std=0.01*torch.ones(states.shape) )
         states += randomness
 
         # smooth path (diagram of which states are averaged)
@@ -83,7 +80,7 @@ class Planner:
         next_smooth = torch.cat([states[1:,:],      states[-1,None, :], ], dim=0)
         states = (prev_smooth + next_smooth + states)/3
 
-        self.states = states.clone().detach().requires_grad_(True)
+        self.states = states.clone().detach().to(device).requires_grad_(True)
 
     def params(self):
         return [self.initial_accel, self.states]
@@ -104,8 +101,8 @@ class Planner:
 
         # start, next, decision_states, last, end
 
-        start_accel = start_R @ torch.tensor([0,0,1.0]) * self.initial_accel[0] + self.g
-        next_accel = next_R @ torch.tensor([0,0,1.0]) * self.initial_accel[1] + self.g
+        start_accel = start_R @ torch.tensor([0,0,1.0]).to(device) * self.initial_accel[0] + self.g
+        next_accel = next_R @ torch.tensor([0,0,1.0]).to(device) * self.initial_accel[1] + self.g
 
         next_vel = start_v + start_accel * self.dt
         after_next_vel = next_vel + next_accel * self.dt
@@ -199,17 +196,18 @@ class Planner:
         torques = torch.norm(actions[:, 1:], dim=-1).to(device)
 
         # S, B, 3  =  S, _, 3 +      _, B, 3   X    S, _,  3
-        B_body, B_omega = torch.broadcast_tensors(self.robot_body, omega[:,None,:])
-        point_vels = vel[:,None,:] + torch.cross(B_body, B_omega, dim=-1)
+        # B_body, B_omega = torch.broadcast_tensors(self.robot_body, omega[:,None,:])
+        # point_vels = vel[:,None,:] + torch.cross(B_body, B_omega, dim=-1)
 
         # S, B
         distance = torch.sum( vel**2 + 1e-5, dim = -1)**0.5
         # S, B
         density = self.nerf( self.body_to_world(self.robot_body) )**2
+        density = density.squeeze()
 
         # multiplied by distance to prevent it from just speed tunnelling
         # S =   S,B * S,_
-        colision_prob = torch.mean(density * distance[:,None], dim = -1) 
+        colision_prob = torch.mean(density[None,:] * distance[:,None], dim = -1) 
 
         if self.epoch < self.fade_out_epoch:
             t = torch.linspace(0,1, colision_prob.shape[0])
@@ -218,7 +216,7 @@ class Planner:
             colision_prob = colision_prob * mask
 
         #PARAM cost function shaping
-        return 1000*fz**2 + 0.01*torques**2 + colision_prob * self.penalty, colision_prob*self.penalty
+        return 1*(fz + self.g[-1])**2 + 0.01*torques**2 + self.penalty*colision_prob, self.penalty*colision_prob
 
     def total_cost(self):
         total_cost, collision_loss  = self.get_state_cost()

@@ -18,6 +18,8 @@ catnips/statues.blend1
 catnips/stonehenge.blend
 catnips/stonehenge.blend1
 catnips/catnips_data
+baseline/basegrid_data
+nerf-nav/baseline_paths
 results_processed
 catnips/catnips_data/flightroom/path.json
 catnips/catnips_data/flightroom/purr/conv_centers.npy

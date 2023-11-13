@@ -2,16 +2,14 @@
 import numpy as np
 import torch
 import json
-from scipy.spatial.transform import Rotation as R
 import time
 
 #Import utilies
 from nerf.nerf import NeRFWrapper
 from baseline_grid.baseline_grid import BaselineGrid
 from corridor.init_path import PathInit
-from corridor.bounds import BoxCorridor, PolytopeCorridor
+from corridor.bounds import BoxCorridor
 from planner.spline_planner import SplinePlanner
-from planner.mpc import MPC 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # %%
@@ -19,19 +17,20 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Stonehenge
 nerfwrapper = NeRFWrapper("./outputs/stonehenge/nerfacto/2023-10-26_111046")
 exp_name = 'stonehenge'
+world_frame = False
 
 # Statues
 # nerfwrapper = NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")
 # exp_name = 'statues'
+# world_frame = False
 
 # Flightroom
 # nerfwrapper = NeRFWrapper("./outputs/flightroom/nerfacto/2023-10-15_232532")
 # exp_name = 'flightroom'
-
-world_frame = False
+# world_frame = True
 
 #%%
-### Catnips configs
+### Baseline configs
 
 # Stonehenge
 grid = np.array([
@@ -58,7 +57,7 @@ grid = np.array([
 agent_body = .02*np.array([[-1, 1], [-1, 1], [-0.3, 0.3]])
 
 # #Configs
-cutoff = 1e3
+cutoff = 1e2
 discretization = 150
 
 basegrid_configs = {
@@ -112,8 +111,7 @@ list_plan = []
 list_astar = []
 
 corridor = BoxCorridor(basegrid.basegrid, basegrid.conv_centers, r=0.1)
-# planner = SplinePlanner(spline_deg=3, N_sec=10)
-planner = SplinePlanner() # MPC(N=40)
+planner = SplinePlanner()
 
 for it, (start, end) in enumerate(zip(x0, xf)):
     if world_frame:
@@ -149,6 +147,8 @@ for it, (start, end) in enumerate(zip(x0, xf)):
         # traj, efforts = planner.solve(As, Bs, x0_ns, xf_ns)
         if world_frame:
             traj = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(traj[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
+            straight_path = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(straight_path[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
+
         # traj = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(path[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
 
     # except:

@@ -1,25 +1,8 @@
 import numpy as np
 import torch
-import unfoldNd
+import torch.nn.functional as F
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-def maxpool3d(input, kernel):
-    # Kernel is binary mask
-    # Pad tensor
-
-    pad = (kernel.shape[0]//2, kernel.shape[1]//2, kernel.shape[2]//2)
-    lib_module = unfoldNd.UnfoldNd(kernel.shape, padding=pad)
-
-    inp_unf = lib_module(input)
-    #inp_unf = torch.nn.functional.unfold(input, kernel.shape, padding=pad)
-    inp_unf = inp_unf.transpose(1, 2)
-    inp_unf = inp_unf.view((1, -1, kernel.shape[0], kernel.shape[1], kernel.shape[2]))
-    inp_unf = inp_unf.permute(2, 3, 4, 0, 1)[kernel].squeeze()
-    inp_unf = inp_unf.transpose(0, 1).view((input.shape[2], input.shape[3], input.shape[4], -1))
-    inp_unf = torch.max(inp_unf, dim=-1)[0]
-
-    return inp_unf
 
 # --------------------------------------------------------------------------------#
 ### Utiliy function to make components of the PURR and solve for the trajectory ###
@@ -102,8 +85,6 @@ def generate_kernel(robot_lims, grid, N):
 
 # Generates Probabilistically Unsafe Robot Regions
 def generate_basegrid(grid, kernel, get_density, discretization=100, density_factor=1., cutoff=1e3):
-
-    kernel = kernel.to(dtype=torch.long)
     
     with torch.no_grad():
         # Querying density for grid vertices
@@ -131,12 +112,14 @@ def generate_basegrid(grid, kernel, get_density, discretization=100, density_fac
 
     densities = torch.stack([x0y0z0, x1y0z0, x0y1z0, x0y0z1, x1y1z0, x0y1z1, x1y0z1, x1y1z1], dim=0)
 
-    max_densities = torch.max(densities, dim=0)[0]     # N-1 x N-1 x N-1
+    max_densities = torch.max(densities, dim=0)[0]
     
-    #The size of each dimension depends on the relative size between the resolution of the density field and the agent
-    robo_intensity = maxpool3d(max_densities[None, None,...], kernel).squeeze().cpu().numpy()
+    simple_grid = (max_densities >= cutoff).to(dtype=torch.float32)
 
-    safe_zone = (robo_intensity >= cutoff).squeeze().cpu().numpy()
+    #The size of each dimension depends on the relative size between the resolution of the density field and the agent
+    robo_intensity = F.conv3d(simple_grid[None, None, ...], kernel[None, None, ...]).squeeze().cpu().numpy()
+
+    safe_zone = (robo_intensity <= 0.5)     # If there is one occupied voxel, the convolution will yield at least 1.
 
     # Create center points of the safe zone
     center_pts = pts[:-1, :-1, :-1] + (torch.tensor([lx, ly, lz], device=device) / 2)[None, None, None, :]    # Assuming grid is ordered from smallest to largest
@@ -173,9 +156,9 @@ def generate_basegrid_simple(grid, get_density, discretization=100, density_fact
     x1y1z1 = density[1:, 1:, 1:]      #[1, 1, 1]
 
     densities = torch.stack([x0y0z0, x1y0z0, x0y1z0, x0y0z1, x1y1z0, x0y1z1, x1y0z1, x1y1z1], dim=0)
-    max_densities = torch.max(densities, dim=0)[0]     # N-1 x N-1 x N-1
-
-    basegrid_simple = (max_densities >= cutoff).squeeze().cpu().numpy()
+    max_densities = torch.max(densities, dim=0)[0]
+    
+    basegrid_simple = (max_densities <= cutoff)
 
     # Create center points of the safe zone
     center_pts = pts[:-1, :-1, :-1] + (torch.tensor([lx, ly, lz], device=device) / 2)[None, None, None, :]    # Assuming grid is ordered from smallest to largest

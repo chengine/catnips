@@ -57,7 +57,7 @@ class BaselineGrid():
             ### Initialization: Create the robot kernel and the PURR
             # Create kernel that is upper bound of robot geometry
             self.kernel = generate_kernel(self.agent_body, self.grid, self.discretization)
-
+            print('Kernel shape: ', self.kernel.shape)
             self.basegrid, self.conv_centers = generate_basegrid(self.grid, self.kernel, self.get_density,
                                                         discretization=self.discretization, 
                                                         density_factor=self.density_factor,
@@ -97,7 +97,7 @@ class BaselineGrid():
 
         if save_property:
             # Save purr data
-            np.save(filename + 'basegrid.npy', self.purr)
+            np.save(filename + 'basegrid.npy', self.basegrid)
             np.save(filename + 'conv_centers.npy', self.conv_centers)
             np.save(filename + 'kernel.npy', self.kernel.cpu().numpy())
 

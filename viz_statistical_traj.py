@@ -15,7 +15,16 @@ from numpy import linalg as la
 ################### FOR OUR METHOD ################################
 
 exp_name = 'stonehenge'
-base = bpy.path.abspath('//') + f'catnips_data/{exp_name}/path.json'
+method = 'baseline'
+if method == 'baseline':
+    data_folder = 'basegrid_data'
+    base = bpy.path.abspath('//') + f'{method}/{data_folder}/{exp_name}/path.json'
+elif method == 'catnips':
+    data_folder = 'catnips_data'
+    base = bpy.path.abspath('//') + f'{method}/{data_folder}/{exp_name}/path.json'
+elif method =='nerf-nav':
+    data_folder = 'baseline_paths'
+    base = bpy.path.abspath('//') + f'{method}/{data_folder}/{exp_name}/100.0_iter0/init_costs/19.json'
 
 
 my_coll = bpy.data.collections.new(f'{exp_name}')
@@ -25,7 +34,10 @@ bpy.context.scene.collection.children.link(my_coll)
 with open(base, 'r') as f:
     meta = json.load(f)
     
-locations = meta["traj"]
+if method == 'nerf-nav':
+    locations = [meta["pos"]]
+else:
+    locations = meta["traj"]
 
 for i, traj in enumerate(locations):
     traj = np.array(traj)[..., :3]

@@ -187,13 +187,12 @@ def next_rotation(R, omega, dt):
     # Propagate rotation matrix using exponential map of the angle displacements
     angle = omega*dt
     theta = torch.norm(angle, p=2)
-    if theta == 0:
-        exp_i = torch.eye(3)
+    if torch.abs(theta) <= 1e-3:
+        exp_i = torch.eye(3).to(R.device)
     else:
-        exp_i = torch.eye(3)
         angle_norm = angle / theta
         K = skew_matrix(angle_norm)
-        exp_i = torch.eye(3) + torch.sin(theta) * K + (1 - torch.cos(theta)) * torch.matmul(K, K)
+        exp_i = torch.eye(3).to(R.device) + torch.sin(theta) * K + (1 - torch.cos(theta)) * torch.matmul(K, K)
 
     next_R = R @ exp_i
     return next_R

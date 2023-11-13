@@ -47,26 +47,29 @@ def simulate(planner_cfg, density_fn, iteration):
 #%%
 
 # Stonehenge
-nerfwrapper = NeRFWrapper("./outputs/stonehenge/nerfacto/2023-10-26_111046")
-exp_name = 'stonehenge'
+# nerfwrapper = NeRFWrapper("./outputs/stonehenge/nerfacto/2023-10-26_111046")
+# exp_name = 'stonehenge'
+# world_frame = False
 
 # Statues
 # nerfwrapper = NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")
 # exp_name = 'statues'
+# world_frame = False
 
 # Flightroom
-# nerfwrapper = NeRFWrapper("./outputs/flightroom/nerfacto/2023-10-15_232532")
-# exp_name = 'flightroom'
+nerfwrapper = NeRFWrapper("./outputs/flightroom/nerfacto/2023-10-15_232532")
+exp_name = 'flightroom'
+world_frame = True
 
 ### Baseline configs
 
 # Stonehenge
-grid = np.array([
-    [-1.4, 1.1],
-    [-1.4, 1.1],
-    [-0.1, 0.5]
-    ])   
-body_nbins = [5, 5, 17]
+# grid = np.array([
+#     [-1.4, 1.1],
+#     [-1.4, 1.1],
+#     [-0.1, 0.5]
+#     ])   
+# body_nbins = [5, 5, 17]
 
 # Statues
 # grid = np.array([
@@ -77,15 +80,15 @@ body_nbins = [5, 5, 17]
 # body_nbins = [9, 9, 15]
 
 # Flightroom
-# grid = np.array([
-#     [-1., 1.],
-#     [-1., 1.],
-#     [-0.5, 0.5]
-#     ])   
-# body_nbins = [9, 9, 15]
+grid = np.array([
+    [-1., 1.],
+    [-1., 1.],
+    [-0.5, 0.5]
+    ])   
+body_nbins = [9, 9, 15]
 
 #Create robot body
-agent_body = .02*np.array([[-1, 1], [-1, 1], [-0.3, 0.3]])
+agent_body = .03*np.array([[-1, 1], [-1, 1], [-0.3, 0.3]])
 
 ### ----- NERF-NAV PARAMETERS ----- #
 
@@ -113,9 +116,9 @@ N_test = 100
 t = np.linspace(0, np.pi, N_test)
 
 # Stonehenge
-r = 1.12
-dz = 0.05
-center = np.array([-0.21, -0.132, 0.16])
+# r = 1.12
+# dz = 0.05
+# center = np.array([-0.21, -0.132, 0.16])
 
 # Statues
 # r = 0.475
@@ -123,9 +126,9 @@ center = np.array([-0.21, -0.132, 0.16])
 # center = np.array([-0.064, -0.0064, -0.025])
 
 # Flightroom
-# r = 2.6
-# dz = 0.2
-# center = np.array([0.10, 0.057, 0.585])
+r = 2.6
+dz = 0.2
+center = np.array([0.10, 0.057, 0.585])
 
 x0 = np.stack([r*np.cos(t), r*np.sin(t), dz * 2*(np.random.rand(N_test)-0.5)], axis=-1)
 xf = np.stack([r*np.cos(t + np.pi), r*np.sin(t + np.pi), dz * 2*(np.random.rand(N_test)-0.5)], axis=-1)
@@ -171,7 +174,7 @@ astar_fp = f'baseline_paths/{exp_name}/path.json'
 with open(astar_fp, 'r') as f:
     meta = json.load(f)
 
-astar_paths = meta['astar']
+astar_paths = [nerfwrapper.data_frame_to_ns_frame(torch.tensor(astar).to(device, dtype=torch.float32)).squeeze().cpu() for astar in meta['astar']]
 astar_counter = 0
 
 penalties = [1e2, 1e3, 1e4]
@@ -179,11 +182,15 @@ for penalty in penalties:
     planner_cfg['penalty'] = penalty
     for it, (start, end) in enumerate(zip(x0, xf)):
 
+        if world_frame:
+            start = nerfwrapper.data_frame_to_ns_frame(start.to(device)).squeeze().cpu()
+            end = nerfwrapper.data_frame_to_ns_frame(end.to(device)).squeeze().cpu()
+            
         # match the astar initialization with the current config
-        if torch.linalg.norm(torch.tensor(astar_paths[astar_counter])[0] - start) <= 1e-1:
+        if torch.linalg.norm(astar_paths[astar_counter][0] - start) <= 1e-1:
             print('Found Astar match')
 
-            planner_cfg['astar'] = np.array(astar_paths[astar_counter])
+            planner_cfg['astar'] = astar_paths[astar_counter].cpu().numpy()
             astar_counter += 1
         else:
             print(f'Point {it} did not match.')

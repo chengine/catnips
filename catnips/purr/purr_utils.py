@@ -175,7 +175,7 @@ def generate_purr(grid, kernel, get_density, discretization=100, density_factor=
     x_off, y_off, z_off = kernel.shape[0]//2, kernel.shape[1]//2, kernel.shape[2]//2
     trunc_center_pts = center_pts[x_off:-x_off, y_off:-y_off, z_off:-z_off]
 
-    return safe_zone, trunc_center_pts.cpu().numpy()
+    return safe_zone, trunc_center_pts.cpu().numpy(), cdf
 
 # Generates Probabilistic Unoccupied Grid
 def generate_pug(grid, get_density, discretization=100, density_factor=1., sigma=0.95, Aaux=1e-8, dt=1e-2, V_percent=0.05, gamma=1.):
@@ -247,3 +247,24 @@ def generate_pug(grid, get_density, discretization=100, density_factor=1., sigma
     center_pts = pts[:-1, :-1, :-1] + (torch.tensor([lx, ly, lz], device=device) / 2)[None, None, None, :]    # Assuming grid is ordered from smallest to largest
 
     return pug, center_pts.cpu().numpy()
+
+def centers_to_vertices(points, lx, ly, lz):
+    # points: N x 3
+
+    vertices = np.array([
+        [-lx/2, -ly/2, -lz/2],
+        [lx/2, -ly/2, -lz/2],
+        [-lx/2, ly/2, -lz/2],
+        [-lx/2, -ly/2, lz/2],
+        [lx/2, ly/2, -lz/2],
+        [lx/2, -ly/2, lz/2],
+        [-lx/2, ly/2, lz/2],
+        [lx/2, ly/2, lz/2]
+    ])
+
+    points_ = points[..., None]     # N x 3 x 1
+    vertices_ = (vertices.T)[None,...]
+
+    possible_vertices = points + vertices_
+
+    return np.unique(possible_vertices, axis=0)

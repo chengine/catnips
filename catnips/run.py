@@ -83,10 +83,10 @@ catnips_configs = {
 catnips = Catnips(catnips_configs)      # Instantiate class
 catnips.load_purr()                     # MUST load details about the PURR
 catnips.create_purr()                 # Generates PURR voxel grid
+
+### If you need to run this in real-time, don't save the mesh.
 catnips.save_purr(f'./catnips_data/{exp_name}/purr/') #, transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale, save_property=True)
 
-# catnips.create_pug(0.01, 0.99)
-# catnips.save_pug(f'./catnips_data/{exp_name}/purr/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale)
 #%%
 
 # TODO: need to change occupied points to be vertices instead of centers for corridor generation (A* ok to use centers)
@@ -160,16 +160,6 @@ for it, (start, end) in enumerate(zip(x0, xf)):
         if world_frame:
             traj = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(traj[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
         # traj = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(path[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
-
-    # except:
-    #     print('Unfeasible solution. Using initialization.')
-    #     traj = path
-
-    # derivs = {
-    #     'vel0': np.zeros(3),
-    #     'accel0': np.zeros(3),
-    #     'jerk0': np.zeros(3)
-    # }
 
         list_plan.append(traj)
         list_astar.append(straight_path)

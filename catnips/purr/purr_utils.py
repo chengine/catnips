@@ -265,6 +265,6 @@ def centers_to_vertices(points, lx, ly, lz):
     points_ = points[..., None]     # N x 3 x 1
     vertices_ = (vertices.T)[None,...]
 
-    possible_vertices = points + vertices_
+    possible_vertices = points_ + vertices_
 
     return np.unique(possible_vertices, axis=0)

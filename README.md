@@ -5,7 +5,7 @@
  [Preston Culbertson](https://www.its.caltech.edu/~pculbert/)\*<sup>2</sup>,
  [Mac Schwager](https://web.stanford.edu/~schwager/)\*<sup>1</sup>,
  <sup>1</sup>Stanford, <sup>2</sup>Caltech
-in TR-O 2024
+in IEEE Transactions on Robotics (2024)
 
 <img src='imgs/title.png'/>
 
@@ -37,7 +37,7 @@ catnips
 ├──outputs                                                                                                                                                      
 │   └── flightroom                                                                                                  
 │       └── nerfacto                                                                                                                             
-│           └── 2023-06-22_215809                                                                               
+│           └── 2024-07-02_135009                                                                               
 │               └── nerfstudio_models
 |               └── config.yml
 |               └── dataparser_transforms.json # This file contains the transform that transforms from "Data" frame to "Nerfstudio" frame (which is typically a unit box)
@@ -50,13 +50,13 @@ After the dependencies and the data is setup, navigate to the catnips folder, an
 python run.py
 ```
 
-The most important thing is to ensure that the path in NeRFWrapper is pointing to the right model location. For example, for the above example, `NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")`.
+The most important thing is to ensure that the path in NeRFWrapper is pointing to the right model location. For example, for the above example, `NeRFWrapper("./outputs/statues/nerfacto/2024-07-02_135009")`.
 
 ### Replicating the paper results and Baselines
 The baselines (baseline grid and NeRF-Nav) folders are structured the same way as the `catnips` folder. Execute the `run.py`.
 
 ### Visualizing the paths
-The outputs of the `run.py` scripts is a json containing a dictionary of paths, represented as waypoints. One way is to visualize them in Open3D and load each path as a PointCloud object. Another is to use an external visualizer like [Blender](https://www.blender.org/). In `catnips/scripts/viz_statistical_traj.py` is a Blender script (i.e. open the script in the Blender Scripting tab), where it will visualize the path if pointed to where the json is. 
+The outputs of the `run.py` scripts is a json containing a dictionary of paths, represented as waypoints. One way is to visualize them in Open3D and load each path as a PointCloud object. Another is to use an external visualizer like [Blender](https://www.blender.org/). In `catnips/scripts/viz_statistical_traj.py` is a Blender script (i.e. open the script in the Blender Scripting tab), where it will visualize the path if pointed to where the json is. In the same directory as the `path.json`, there is also a mesh of the PURR, as well as the corridors in .ply format.
 
 <img src='imgs/blender.png'/>
 

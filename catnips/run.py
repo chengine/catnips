@@ -11,29 +11,32 @@ from purr.purr import Catnips
 from corridor.init_path import PathInit
 from corridor.bounds import BoxCorridor
 from planner.spline_planner import SplinePlanner
-from planner.mpc import MPC 
+# from planner.mpc import MPC 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # %%
+
+###NOTE: Point your path to the correct NeRF model
 
 # Stonehenge
 # nerfwrapper = NeRFWrapper("./outputs/stonehenge/nerfacto/2023-10-26_111046")
 # exp_name = 'stonehenge'
 
 # Statues
-nerfwrapper = NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")
+nerfwrapper = NeRFWrapper("./outputs/statues/nerfacto/2024-07-02_135009")
 exp_name = 'statues'
 
 # Flightroom
 # nerfwrapper = NeRFWrapper("./outputs/flightroom/nerfacto/2023-10-15_232532")
 # exp_name = 'flightroom'
 
+# World frame will convert the path back to the world frame from the Nerfstudio frame
 world_frame = False
 
 #%%
 ### Catnips configs
 
-# Grid is the bounding box of the scene in which we sample from
+# Grid is the bounding box of the scene in which we sample from. Note that this grid is typically in the Nerfstudio frame.
 # Stonehenge
 # grid = np.array([
 #     [-1.4, 1.1],
@@ -61,12 +64,12 @@ grid = np.array([
 #     [-0.5, 0.5]
 #     ])   
 
-#Create robot body
+# Create robot body. This is also in the Nerfstudio frame/scale.
 agent_body = .03*np.array([[-1, 1], [-1, 1], [-0.3, 0.3]])
 
 # #Configs
-sigma = 0.99
-discretization = 150
+sigma = 0.99    # Chance of being below interpenetration volume
+discretization = 150    # Number of partitions per side of voxel grid
 
 catnips_configs = {
     'grid': grid,               # Bounding box of scene
@@ -90,13 +93,13 @@ catnips.save_purr(f'./catnips_data/{exp_name}/purr/') #, transform=nerfwrapper.t
 
 #%%
 
-# TODO: need to change occupied points to be vertices instead of centers for corridor generation (A* ok to use centers)
+# Instantiate the A* path planner
 occupied_vertices = catnips.purr_vertices
 astar_path = PathInit(catnips.purr, catnips.conv_centers)
 
-N_test = 100
+N_test = 100        # Number of test trajectories
 t = np.linspace(0, np.pi, N_test)
-num_sec = 20
+num_sec = 20        # Number of sections for the A* path
 
 # Stonehenge
 # r = 1.12
@@ -104,8 +107,8 @@ num_sec = 20
 # center = np.array([-0.21, -0.132, 0.16])
 
 # Statues
-r = 0.475
-dz = 0.05
+r = 0.475       # radius of circle
+dz = 0.05       # randomness in height of circle
 center = np.array([-0.064, -0.0064, -0.025])
 
 # Flightroom
@@ -113,20 +116,21 @@ center = np.array([-0.064, -0.0064, -0.025])
 # dz = 0.2
 # center = np.array([0.10, 0.057, 0.585])
 
-x0 = np.stack([r*np.cos(t), r*np.sin(t), dz * 2*(np.random.rand(N_test)-0.5)], axis=-1)
-xf = np.stack([r*np.cos(t + np.pi), r*np.sin(t + np.pi), dz * 2*(np.random.rand(N_test)-0.5)], axis=-1)
+x0 = np.stack([r*np.cos(t), r*np.sin(t), dz * 2*(np.random.rand(N_test)-0.5)], axis=-1)     # starting positions
+xf = np.stack([r*np.cos(t + np.pi), r*np.sin(t + np.pi), dz * 2*(np.random.rand(N_test)-0.5)], axis=-1)     # goal positions
 
-x0 = x0 + center
+x0 = x0 + center        # Shift circle
 xf = xf + center
 
 list_plan = []
 list_astar = []
 
 corridor = BoxCorridor(catnips.purr, catnips.conv_centers, r=0.1)
-# planner = SplinePlanner(spline_deg=3, N_sec=10)
-planner = SplinePlanner() # MPC(N=40)
+planner = SplinePlanner()
 
 for it, (start, end) in enumerate(zip(x0, xf)):
+
+    # converts the start and end locations to the Nerfstudio frame
     if world_frame:
         x0_ns = nerfwrapper.data_frame_to_ns_frame(torch.from_numpy(start).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
         xf_ns = nerfwrapper.data_frame_to_ns_frame(torch.from_numpy(end).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
@@ -136,31 +140,24 @@ for it, (start, end) in enumerate(zip(x0, xf)):
         xf_ns = end
 
     try:
+        tnow = time.time()
         # This is in the ns frame
+        # Creates the A* path
         path, straight_path = astar_path.create_path(x0_ns, xf_ns, num_sec=num_sec)
 
-        # cat_path = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(cat_path).to(device, dtype=torch.float32)).squeeze()
-
-        # Create bounds
-        # Convert this to the world frame
-
-        # path = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(path).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
-        # occupied_pts = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(occupied_pts).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
-        
-        tnow = time.time()
+        # Creates the corridor from the A* path
         As, Bs, bounds = corridor.create_corridor(straight_path)    
-        print('Elapsed', time.time() - tnow)
 
+        # Saves the cuboid corridor
         corridor.bounds2mesh(Bs, f'./catnips_data/{exp_name}/bounds/', transform=nerfwrapper.transform.cpu().numpy(), scale=nerfwrapper.scale, i=it)
 
         # Create dynamically feasible/smooth path
-        # try:
+        # Solve the spline optimization problem
         traj = planner.optimize_b_spline(As, Bs, straight_path[0], straight_path[-1], derivatives=None)
 
-        # traj, efforts = planner.solve(As, Bs, x0_ns, xf_ns)
         if world_frame:
             traj = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(traj[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
-        # traj = nerfwrapper.ns_frame_to_data_frame(torch.from_numpy(path[..., :3]).to(device, dtype=torch.float32)).squeeze().cpu().numpy()
+        print('Elapsed', time.time() - tnow)
 
         list_plan.append(traj)
         list_astar.append(straight_path)

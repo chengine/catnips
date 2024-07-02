@@ -18,15 +18,14 @@ from numpy import linalg as la
     
 ################### FOR OUR METHOD ################################
 
-
-base = bpy.path.abspath('//') + f'purr_data/path.json'
+exp_name = 'statues'
+base = bpy.path.abspath('//') + f'catnips_data/{exp_name}/path.json'
 
 #start_obj = bpy.data.objects["start_point"]
 #end_obj = bpy.data.objects["end_point"]
 
 my_coll = bpy.data.collections.new(f'Statistical_test')
 bpy.context.scene.collection.children.link(my_coll)
-material = bpy.data.materials["Material2"]
 
 with open(base, 'r') as f:
     meta = json.load(f)
@@ -70,7 +69,6 @@ for iter, points in enumerate(locations):
     # make a new object with the curve
     obj = bpy.data.objects.new(f'traj_{iter}', crv)
     obj.data.bevel_depth = 0.005
-    obj.data.materials.append(material)
     my_coll.objects.link(obj)
 
 

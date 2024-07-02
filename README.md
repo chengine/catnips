@@ -1,5 +1,5 @@
 # CATNIPS
-### [Project Page](http://tancik.com/nerf) | [Paper (TR-O)](https://ieeexplore.ieee.org/document/10494911) | [Paper (arXiv)](https://arxiv.org/abs/2302.12931) |[Data](https://drive.google.com/drive/folders/11O7o5811NJIaSq5jC7dqwMteKWDD3QtL?usp=sharing)
+### [Project Page](http://tancik.com/nerf) | [Paper (TR-O)](https://ieeexplore.ieee.org/document/10494911) | [Paper (arXiv)](https://arxiv.org/abs/2302.12931) | [Data](https://drive.google.com/drive/folders/11O7o5811NJIaSq5jC7dqwMteKWDD3QtL?usp=sharing)
 [CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes](http://tancik.com/nerf)  
  [Timothy Chen](https://msl.stanford.edu/people/timchen)\*<sup>1</sup>,
  [Preston Culbertson](https://www.its.caltech.edu/~pculbert/)\*<sup>2</sup>,

@@ -56,7 +56,7 @@ The most important thing is to ensure that the path in NeRFWrapper is pointing t
 The baselines (baseline grid and NeRF-Nav) folders are structured the same way as the CATNIPS folder. Execute the `run.py`.
 
 ### Visualizing the paths
-The outputs of the `run.py` scripts is a json containing a dictionary of paths, represented as waypoints. One way is to visualize them in Open3D and load each path as a PointCloud object. Another is to use an external visualizer like Blender (https://www.blender.org/). In `catnips/scripts/viz_statistical_traj.py` is a Blender script (i.e. open the script in the Blender Scripting tab), where it will visualize the path if pointed to where the json is. 
+The outputs of the `run.py` scripts is a json containing a dictionary of paths, represented as waypoints. One way is to visualize them in Open3D and load each path as a PointCloud object. Another is to use an external visualizer like [Blender](https://www.blender.org/). In `catnips/scripts/viz_statistical_traj.py` is a Blender script (i.e. open the script in the Blender Scripting tab), where it will visualize the path if pointed to where the json is. 
 
 <img src='imgs/blender.png'/>
 

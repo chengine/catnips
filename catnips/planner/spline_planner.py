@@ -85,21 +85,3 @@ class SplinePlanner():
             full_traj.append(sub_traj)
 
         return np.concatenate(full_traj, axis=0)
-
-#%% 
-# import json
-# import time
-
-# fp = 'bounds.json'
-# with open(fp, "r") as infile:
-#     meta = json.load(infile)
-
-# As = meta['As']
-# Bs = meta['Bs']
-# x0 = meta['x0']
-# xf = meta['xf']
-
-# planner = SplinePlanner(spline_deg=5, N_sec=10)
-# tnow = time.time()
-# traj = planner.optimize_b_spline(As, Bs, x0, xf, derivatives=None)
-# print(time.time() - tnow)

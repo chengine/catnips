@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from scipy.spatial import KDTree
-import cvxpy as cvx
+# import cvxpy as cvx
 import time
 from .bounds_utils import *
 
@@ -97,216 +97,216 @@ class BoxCorridor():
         vox_mesh.merge_close_vertices(1e-6)
         o3d.io.write_triangle_mesh(filename + f'{i}.ply', vox_mesh)
     
-class PolytopeCorridor():
-    def __init__(self, grid_pts_occupied, r=0.1) -> None:
-        self.r = r
-        self.grid_pts_kd = KDTree(grid_pts_occupied.reshape(-1, 3))
+# class PolytopeCorridor():
+#     def __init__(self, grid_pts_occupied, r=0.1) -> None:
+#         self.r = r
+#         self.grid_pts_kd = KDTree(grid_pts_occupied.reshape(-1, 3))
 
-    def create_corridor(self, path):
-        mid_points_path = 0.5* (path[1:] + path[:-1])
+#     def create_corridor(self, path):
+#         mid_points_path = 0.5* (path[1:] + path[:-1])
 
-        neighbors = self.grid_pts_kd.query_ball_point(mid_points_path, self.r)
+#         neighbors = self.grid_pts_kd.query_ball_point(mid_points_path, self.r)
 
-        A_list = []
-        B_list = []
+#         A_list = []
+#         B_list = []
 
-        for it, (neigh, start, end, mid) in enumerate(zip(neighbors, path[:-1], path[1:], mid_points_path)):
+#         for it, (neigh, start, end, mid) in enumerate(zip(neighbors, path[:-1], path[1:], mid_points_path)):
             
-            # Data processing into matrices for CVX
-            data_out = self.grid_pts_kd.data[neigh]
-            data_in = np.stack([start, end], axis=0)
+#             # Data processing into matrices for CVX
+#             data_out = self.grid_pts_kd.data[neigh]
+#             data_in = np.stack([start, end], axis=0)
 
-            # IMPORTANT: SHIFT ALL POINTS TO ORIGIN
-            data_out = data_out - mid[None, :]
-            data_in = data_in - mid[None, :]
+#             # IMPORTANT: SHIFT ALL POINTS TO ORIGIN
+#             data_out = data_out - mid[None, :]
+#             data_in = data_in - mid[None, :]
 
-            data1 = data_out[:, :, None] * data_out[..., None, :]
-            data1 = data1.transpose(0, 2, 1)
-            data1 = data1.reshape(data_out.shape[0], 9)
+#             data1 = data_out[:, :, None] * data_out[..., None, :]
+#             data1 = data1.transpose(0, 2, 1)
+#             data1 = data1.reshape(data_out.shape[0], 9)
 
-            data2 = data_in[..., None] * data_in[..., None, :]
-            data2 = data2.transpose(0, 2, 1)
-            data2 = -data2.reshape(2, 9)
+#             data2 = data_in[..., None] * data_in[..., None, :]
+#             data2 = data2.transpose(0, 2, 1)
+#             data2 = -data2.reshape(2, 9)
 
-            data = np.concatenate([data1, data2], axis=0)
-            h = np.ones((data.shape[0]))
-            h[-2:] = -1
+#             data = np.concatenate([data1, data2], axis=0)
+#             h = np.ones((data.shape[0]))
+#             h[-2:] = -1
             
-            #tnow = time.time()
-            X = self.generate_ellipse(data, h)
+#             #tnow = time.time()
+#             X = self.generate_ellipse(data, h)
 
-            # X = self.generate_ellipse_simple(data_out, start, end)
+#             # X = self.generate_ellipse_simple(data_out, start, end)
 
-            # assert(np.linalg.norm(X @ (start - mid)) == 1.)
-            # assert(np.linalg.norm(X @ (end - mid)) == 1.)
+#             # assert(np.linalg.norm(X @ (start - mid)) == 1.)
+#             # assert(np.linalg.norm(X @ (end - mid)) == 1.)
 
-            #print('Elapsed ellipse', time.time() - tnow)
-            #tnow = time.time()
-            A, B = self.generate_polytope(data_in, data_out, mid, X)
+#             #print('Elapsed ellipse', time.time() - tnow)
+#             #tnow = time.time()
+#             A, B = self.generate_polytope(data_in, data_out, mid, X)
 
-            print(A @ start - B )
-            print(A @ end - B )
-            print(A)
-            print(B)
-            assert(np.all(A @ start - B <= 0.))
-            assert(np.all(A @ end - B <= 0.))
+#             print(A @ start - B )
+#             print(A @ end - B )
+#             print(A)
+#             print(B)
+#             assert(np.all(A @ start - B <= 0.))
+#             assert(np.all(A @ end - B <= 0.))
 
-            #print('Elapsed polytope', time.time() - tnow)
+#             #print('Elapsed polytope', time.time() - tnow)
 
-            A_list.append(A)
-            B_list.append(B)
+#             A_list.append(A)
+#             B_list.append(B)
 
-        return A_list, B_list
+#         return A_list, B_list
 
-    def generate_ellipse_simple(self, vertices, start, end):
-        mid_pt = (start + end) / 2
-        rad = np.linalg.norm(start - end) / 2
+#     def generate_ellipse_simple(self, vertices, start, end):
+#         mid_pt = (start + end) / 2
+#         rad = np.linalg.norm(start - end) / 2
 
-        # Find the closest point
-        dd, ii = self.grid_pts_kd.query(mid_pt)
-        closest_pt = self.grid_pts_kd.data[ii] - mid_pt
-        closest_dist = dd
+#         # Find the closest point
+#         dd, ii = self.grid_pts_kd.query(mid_pt)
+#         closest_pt = self.grid_pts_kd.data[ii] - mid_pt
+#         closest_dist = dd
 
-        if dd >= rad:
-            X = (1 / rad) * np.eye(3)
-            return X
+#         if dd >= rad:
+#             X = (1 / rad) * np.eye(3)
+#             return X
 
-        x_axis = (end - mid_pt) / np.linalg.norm(end - mid_pt)
-        r_x = 1 / (rad)
-        r_z = r_x
+#         x_axis = (end - mid_pt) / np.linalg.norm(end - mid_pt)
+#         r_x = 1 / (rad)
+#         r_z = r_x
 
-        dist_min = 0.
-        while dist_min < 1. - 1e-6:
+#         dist_min = 0.
+#         while dist_min < 1. - 1e-6:
 
-            # Define x-y-z coordinate frame
-            inter_axis = (closest_pt) / np.linalg.norm(closest_pt)
-            z_axis = np.cross(x_axis, inter_axis)
-            y_axis = np.cross(z_axis, x_axis)
+#             # Define x-y-z coordinate frame
+#             inter_axis = (closest_pt) / np.linalg.norm(closest_pt)
+#             z_axis = np.cross(x_axis, inter_axis)
+#             y_axis = np.cross(z_axis, x_axis)
 
-            R_body2world = np.stack([x_axis, y_axis, z_axis], axis=-1)
-            R_world2body = R_body2world.T
+#             R_body2world = np.stack([x_axis, y_axis, z_axis], axis=-1)
+#             R_world2body = R_body2world.T
 
-            closest_pt_body = R_world2body @ closest_pt
-            # Find minor axis
-            r_y = np.sqrt((1 / closest_pt_body[1]**2) * (1 - (r_x * closest_pt_body[0])**2 ))
-            r_z = r_y
+#             closest_pt_body = R_world2body @ closest_pt
+#             # Find minor axis
+#             r_y = np.sqrt((1 / closest_pt_body[1]**2) * (1 - (r_x * closest_pt_body[0])**2 ))
+#             r_z = r_y
 
-            X = np.diag(np.array([r_x, r_y, r_z])) @ R_world2body
-            dists_body = np.linalg.norm((X @ vertices.T).T, axis=-1)
+#             X = np.diag(np.array([r_x, r_y, r_z])) @ R_world2body
+#             dists_body = np.linalg.norm((X @ vertices.T).T, axis=-1)
 
-            # Find pt that has smallest distance in body frame
-            ind_min = np.argmin(dists_body)
-            dist_min = dists_body[ind_min]
-            closest_pt = vertices[ind_min]
+#             # Find pt that has smallest distance in body frame
+#             ind_min = np.argmin(dists_body)
+#             dist_min = dists_body[ind_min]
+#             closest_pt = vertices[ind_min]
 
-        # By this point, the minimal pt should yield distance in body frame of 1 and also aligned in x-y. Therefore, we can
-        # extend in the z-direction.
-        second_pt_body = (R_world2body @ vertices.T).T
+#         # By this point, the minimal pt should yield distance in body frame of 1 and also aligned in x-y. Therefore, we can
+#         # extend in the z-direction.
+#         second_pt_body = (R_world2body @ vertices.T).T
 
-        r_z = np.sqrt((1. - (r_x * second_pt_body[:, 0])**2 - (r_y * second_pt_body[:, 1])**2) / second_pt_body[:, 2]**2)
-        r_z = r_z[~np.isnan(r_z)]
-        # r_z = np.sqrt((1. - (r_x * closest_pt[0])**2 - (r_y * closest_pt[1])**2) / closest_pt[2]**2)
+#         r_z = np.sqrt((1. - (r_x * second_pt_body[:, 0])**2 - (r_y * second_pt_body[:, 1])**2) / second_pt_body[:, 2]**2)
+#         r_z = r_z[~np.isnan(r_z)]
+#         # r_z = np.sqrt((1. - (r_x * closest_pt[0])**2 - (r_y * closest_pt[1])**2) / closest_pt[2]**2)
 
-        r_z = np.max(r_z)
-        X = np.diag(np.array([r_x, r_y, r_z])) @ R_world2body
+#         r_z = np.max(r_z)
+#         X = np.diag(np.array([r_x, r_y, r_z])) @ R_world2body
 
-        keep_out = np.linalg.norm((X @ vertices.T), axis=0)
-        assert (keep_out >= 1. - 1e-6).all()
+#         keep_out = np.linalg.norm((X @ vertices.T), axis=0)
+#         assert (keep_out >= 1. - 1e-6).all()
 
-        # Maximal bounding ellipsoid
-        return X
+#         # Maximal bounding ellipsoid
+#         return X
 
-    def generate_ellipse(self, data, h):
+#     def generate_ellipse(self, data, h):
     
-        # Construct the problem.
-        x = cvx.Variable((3, 3), PSD=True)
-        x_vec = cvx.reshape(x, 9)
+#         # Construct the problem.
+#         x = cvx.Variable((3, 3), PSD=True)
+#         x_vec = cvx.reshape(x, 9)
 
-        objective = cvx.Minimize(cvx.trace(x))
-        # objective = cp.Minimize( cp.sum((dat @ x_vec)[:data1.shape[0]]) )
+#         objective = cvx.Minimize(cvx.trace(x))
+#         # objective = cp.Minimize( cp.sum((dat @ x_vec)[:data1.shape[0]]) )
 
-        # cvx.sum( cvx.multiply(data,  (data @ x.T) ),axis=1) >= h
-        constraints = [
-                        data @ x_vec >= h,
-                        cvx.lambda_min(x) >= (1/self.r)**2
-                        ]
+#         # cvx.sum( cvx.multiply(data,  (data @ x.T) ),axis=1) >= h
+#         constraints = [
+#                         data @ x_vec >= h,
+#                         cvx.lambda_min(x) >= (1/self.r)**2
+#                         ]
 
-        prob = cvx.Problem(objective, constraints)
+#         prob = cvx.Problem(objective, constraints)
 
-        result = prob.solve()
-        # print('Elapsed', time.time() - tnow)
+#         result = prob.solve()
+#         # print('Elapsed', time.time() - tnow)
 
-        if x.value is None:
-            raise AssertionError('Could not generate a valid ellipse during safety corridor creation.')
+#         if x.value is None:
+#             raise AssertionError('Could not generate a valid ellipse during safety corridor creation.')
 
-        X = np.array(x.value)
+#         X = np.array(x.value)
 
-        eigs, V = np.linalg.eig(X)
+#         eigs, V = np.linalg.eig(X)
     
-        E = V @ np.sqrt(np.diag(eigs)) @ V.T
+#         E = V @ np.sqrt(np.diag(eigs)) @ V.T
 
-        return E
+#         return E
 
-    def generate_polytope(self, data_in, data_out, mid, X):
-        # Find Bounding polytope
-        collision_pts = data_out
+#     def generate_polytope(self, data_in, data_out, mid, X):
+#         # Find Bounding polytope
+#         collision_pts = data_out
 
-        # Add in box constraints to prevent polytope from stretching to infinity
-        A_box = np.concatenate([np.eye(3), -np.eye(3)], axis=0)
-        B_box = (self.r / np.sqrt(3)) * np.ones(6)
+#         # Add in box constraints to prevent polytope from stretching to infinity
+#         A_box = np.concatenate([np.eye(3), -np.eye(3)], axis=0)
+#         B_box = (self.r / np.sqrt(3)) * np.ones(6)
 
-        if len(collision_pts) == 0:
-            A = A_box
-            B = B_box
-        else:
-            keep_out = np.linalg.norm((X @ collision_pts.T), axis=0)
+#         if len(collision_pts) == 0:
+#             A = A_box
+#             B = B_box
+#         else:
+#             keep_out = np.linalg.norm((X @ collision_pts.T), axis=0)
 
-            # assert (keep_out > 1 - 1e-3).all()
+#             # assert (keep_out > 1 - 1e-3).all()
 
-            keep_out = np.linalg.norm((X @ collision_pts.T), axis=0)
-            keep_in = np.linalg.norm((X @ data_in.T ), axis=0)
+#             keep_out = np.linalg.norm((X @ collision_pts.T), axis=0)
+#             keep_in = np.linalg.norm((X @ data_in.T ), axis=0)
 
-            # assert (keep_in < 1 + 1e-3).all()
+#             # assert (keep_in < 1 + 1e-3).all()
 
-            As = []
-            Bs = []
+#             As = []
+#             Bs = []
 
-            closest_pts = []
+#             closest_pts = []
 
-            while True:
-                dists = np.linalg.norm((X @ collision_pts.T), axis=0)
-                ind_min = np.argmin(dists)
+#             while True:
+#                 dists = np.linalg.norm((X @ collision_pts.T), axis=0)
+#                 ind_min = np.argmin(dists)
 
-                closest_pt = collision_pts[ind_min]
+#                 closest_pt = collision_pts[ind_min]
 
-                X = X / dists[ind_min]
+#                 X = X / dists[ind_min]
 
-                a = 2* X.T @ X @ closest_pt
-                b = a.T @ closest_pt
+#                 a = 2* X.T @ X @ closest_pt
+#                 b = a.T @ closest_pt
 
-                As.append(a)
-                Bs.append(b)
-                closest_pts.append(closest_pt)
+#                 As.append(a)
+#                 Bs.append(b)
+#                 closest_pts.append(closest_pt)
 
-                collision_pts = np.delete(collision_pts, ind_min, axis=0)
+#                 collision_pts = np.delete(collision_pts, ind_min, axis=0)
 
-                if len(collision_pts) > 0:
-                    to_keep = (collision_pts @ a < b)
-                    collision_pts = collision_pts[to_keep]
+#                 if len(collision_pts) > 0:
+#                     to_keep = (collision_pts @ a < b)
+#                     collision_pts = collision_pts[to_keep]
 
-                    if len(collision_pts) == 0:
-                        break
-                else:
-                    break
+#                     if len(collision_pts) == 0:
+#                         break
+#                 else:
+#                     break
 
-            #  Construct Polytope
-            A = np.stack(As, axis=0)
-            B = np.array(Bs)
+#             #  Construct Polytope
+#             A = np.stack(As, axis=0)
+#             B = np.array(Bs)
 
-            A = np.concatenate([A, A_box], axis=0)
-            B = np.concatenate([B, B_box], axis=0)
+#             A = np.concatenate([A, A_box], axis=0)
+#             B = np.concatenate([B, B_box], axis=0)
 
-        # Shift coordinate system back
-        B = B + A @ mid
+#         # Shift coordinate system back
+#         B = B + A @ mid
 
-        return A, B
+#         return A, B

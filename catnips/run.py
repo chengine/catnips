@@ -9,7 +9,7 @@ import time
 from nerf.nerf import NeRFWrapper
 from purr.purr import Catnips
 from corridor.init_path import PathInit
-from corridor.bounds import BoxCorridor, PolytopeCorridor
+from corridor.bounds import BoxCorridor
 from planner.spline_planner import SplinePlanner
 from planner.mpc import MPC 
 
@@ -33,6 +33,7 @@ world_frame = False
 #%%
 ### Catnips configs
 
+# Grid is the bounding box of the scene in which we sample from
 # Stonehenge
 # grid = np.array([
 #     [-1.4, 1.1],

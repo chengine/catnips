@@ -155,7 +155,7 @@ class PathInit():
 
         transformed_pt = point - min_bound
 
-        indices = transformed_pt / self.cell_sizes
+        indices = np.round(transformed_pt / self.cell_sizes).astype(np.uint32)
 
         return_indices = indices.copy()
         # If querying points outside of the bounds, project to the nearest side
@@ -170,10 +170,7 @@ class PathInit():
 
                 print('Point is outside of maximum bounds. Projecting to nearest side. This may cause unintended behavior.')
 
-        return_indices = return_indices.astype(np.uint32)
-
         return return_indices
-
 
     # Process path so you have fewest number of straight line paths as possible
     def fewest_straight_lines(self, path, num_test_pts=100):

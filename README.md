@@ -34,7 +34,7 @@ catnips
 │           └── images
 │           └── transforms.json                                                                                  
 │                                                                                               
-├──outputs                                                                                                                                                                    │   └── flightroom                                                                                                  
+├──outputs                                                                                                                                                         │   └── flightroom                                                                                                  
 │       └── nerfacto                                                                                                                             
 │           └── 2023-06-22_215809                                                                               
 │               └── nerfstudio_models

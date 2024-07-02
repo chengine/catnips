@@ -53,7 +53,7 @@ python run.py
 The most important thing is to ensure that the path in NeRFWrapper is pointing to the right model location. For example, for the above example, `NeRFWrapper("./outputs/statues/nerfacto/2023-07-09_182722")`.
 
 ### Replicating the paper results and Baselines
-The baselines (baseline grid and NeRF-Nav) folders are structured the same way as the CATNIPS folder. Execute the `run.py`.
+The baselines (baseline grid and NeRF-Nav) folders are structured the same way as the `catnips` folder. Execute the `run.py`.
 
 ### Visualizing the paths
 The outputs of the `run.py` scripts is a json containing a dictionary of paths, represented as waypoints. One way is to visualize them in Open3D and load each path as a PointCloud object. Another is to use an external visualizer like [Blender](https://www.blender.org/). In `catnips/scripts/viz_statistical_traj.py` is a Blender script (i.e. open the script in the Blender Scripting tab), where it will visualize the path if pointed to where the json is. 

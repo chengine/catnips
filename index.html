@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="description"
         content="CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes">
-  <meta name="keywords" content="Nerfies, D-NeRF, NeRF">
+  <meta name="keywords" content="NeRF, Safety, Collision Avoidance">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes</title>
 
@@ -52,12 +52,6 @@
   </div>
   <div class="navbar-menu">
     <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
-      <a class="navbar-item" href="https://keunhong.com">
-      <span class="icon">
-          <i class="fas fa-home"></i>
-      </span>
-      </a>
-
       <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link">
           More Research
@@ -82,27 +76,27 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Nerfies: Deformable Neural Radiance Fields</h1>
+          <h1 class="title is-1 publication-title">CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes</h1>
           <div class="is-size-5 publication-authors">
             <span class="author-block">
               <a href="https://msl.stanford.edu/people/timchen">Timothy Chen</a><sup>1</sup>,</span>
             <span class="author-block">
               <a href="https://www.its.caltech.edu/~pculbert/">Preston Culbertson</a><sup>2</sup>,</span>
             <span class="author-block">
-              <a href="https://web.stanford.edu/~schwager/">Mac Schwager</a><sup>2</sup>,
+              <a href="https://web.stanford.edu/~schwager/">Mac Schwager</a><sup>1</sup>,
             </span>
           </div>
 
           <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>University of Washington,</span>
-            <span class="author-block"><sup>2</sup>Google Research</span>
+            <span class="author-block"><sup>1</sup>Stanford University,</span>
+            <span class="author-block"><sup>2</sup>California Institute of Technology</span>
           </div>
 
           <div class="column has-text-centered">
             <div class="publication-links">
               <!-- PDF Link. -->
               <span class="link-block">
-                <a href="https://arxiv.org/pdf/2011.12948"
+                <a href="https://ieeexplore.ieee.org/document/10494911"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fas fa-file-pdf"></i>
@@ -111,7 +105,7 @@
                 </a>
               </span>
               <span class="link-block">
-                <a href="https://arxiv.org/abs/2011.12948"
+                <a href="https://arxiv.org/abs/2302.12931"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="ai ai-arxiv"></i>
@@ -119,19 +113,9 @@
                   <span>arXiv</span>
                 </a>
               </span>
-              <!-- Video Link. -->
-              <span class="link-block">
-                <a href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>
-                  <span>Video</span>
-                </a>
-              </span>
               <!-- Code Link. -->
               <span class="link-block">
-                <a href="https://github.com/google/nerfies"
+                <a href="https://github.com/chengine/catnips"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="fab fa-github"></i>
@@ -141,7 +125,7 @@
               </span>
               <!-- Dataset Link. -->
               <span class="link-block">
-                <a href="https://github.com/google/nerfies/releases/tag/0.1"
+                <a href="https://drive.google.com/drive/folders/11O7o5811NJIaSq5jC7dqwMteKWDD3QtL?usp=sharing"
                    class="external-link button is-normal is-rounded is-dark">
                   <span class="icon">
                       <i class="far fa-images"></i>
@@ -180,49 +164,13 @@
       <div id="results-carousel" class="carousel results-carousel">
         <div class="item item-steve">
           <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/steve.mp4"
+            <source src="./static/videos/OL1_compressed.mp4"
                     type="video/mp4">
           </video>
         </div>
         <div class="item item-chair-tp">
           <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/chair-tp.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-shiba">
-          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/shiba.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-fullbody">
-          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/fullbody.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-blueshirt">
-          <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/blueshirt.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-mask">
-          <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/mask.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-coffee">
-          <video poster="" id="coffee" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/coffee.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-toby">
-          <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/toby2.mp4"
+            <source src="./static/videos/OL2_compressed.mp4"
                     type="video/mp4">
           </video>
         </div>
@@ -240,51 +188,22 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            We present the first method capable of photorealistically reconstructing a non-rigidly
-            deforming scene using photos/videos captured casually from mobile phones.
-          </p>
-          <p>
-            Our approach augments neural radiance fields
-            (NeRF) by optimizing an
-            additional continuous volumetric deformation field that warps each observed point into a
-            canonical 5D NeRF.
-            We observe that these NeRF-like deformation fields are prone to local minima, and
-            propose a coarse-to-fine optimization method for coordinate-based models that allows for
-            more robust optimization.
-            By adapting principles from geometry processing and physical simulation to NeRF-like
-            models, we propose an elastic regularization of the deformation field that further
-            improves robustness.
-          </p>
-          <p>
-            We show that <span class="dnerf">Nerfies</span> can turn casually captured selfie
-            photos/videos into deformable NeRF
-            models that allow for photorealistic renderings of the subject from arbitrary
-            viewpoints, which we dub <i>"nerfies"</i>. We evaluate our method by collecting data
-            using a
-            rig with two mobile phones that take time-synchronized photos, yielding train/validation
-            images of the same pose at different viewpoints. We show that our method faithfully
-            reconstructs non-rigidly deforming scenes and reproduces unseen views with high
-            fidelity.
+            We introduce a transformation of a Neural Radiance Field (NeRF) to an equivalent Poisson Point Process (PPP). 
+            This PPP transformation allows for rigorous quantification of uncertainty in NeRFs, in particular, for computing collision probabilities 
+            for a robot navigating through a NeRF environment. The PPP is a generalization of a probabilistic occupancy grid to the continuous volume 
+            and is fundamental to the volumetric ray-tracing model underlying radiance fields.  Building upon this PPP representation, we present a 
+            chance-constrained trajectory optimization method for safe robot navigation in NeRFs. Our method relies on a voxel representation called 
+            the  Probabilistic Unsafe Robot Region (PURR) that spatially fuses the chance constraint with the NeRF model to facilitate fast trajectory 
+            optimization.  We then combine a graph-based search with a spline-based trajectory optimization to yield robot trajectories through the 
+            NeRF that are guaranteed to satisfy a user-specific collision probability.  We validate our chance constrained planning method through 
+            simulations and hardware experiments, showing superior performance compared to prior works on trajectory planning in NeRF environments. 
           </p>
         </div>
       </div>
     </div>
     <!--/ Abstract. -->
-
-    <!-- Paper video. -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Video</h2>
-        <div class="publication-video">
-          <iframe src="https://www.youtube.com/embed/MrKrnHhk8IA?rel=0&amp;showinfo=0"
-                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-      </div>
-    </div>
-    <!--/ Paper video. -->
   </div>
 </section>
-
 
 <section class="section">
   <div class="container is-max-desktop">
@@ -294,32 +213,30 @@
       <!-- Visual Effects. -->
       <div class="column">
         <div class="content">
-          <h2 class="title is-3">Visual Effects</h2>
+          <h2 class="title is-3">Probabilistic Formulation of NeRFs</h2>
           <p>
-            Using <i>nerfies</i> you can create fun visual effects. This Dolly zoom effect
-            would be impossible without nerfies since it would require going through a wall.
+            We equate a Neural Radiance Field (NeRF) to a Poisson Point Process (PPP). Using this formulation, we can 
+            rigorously quantify probabilistic safety.
           </p>
-          <video id="dollyzoom" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/dollyzoom-stacked.mp4"
-                    type="video/mp4">
-          </video>
+          <img src="./static/images/title.png"
+          class="interpolation-image"
+          alt="Interpolate start reference image."/>
         </div>
       </div>
       <!--/ Visual Effects. -->
 
       <!-- Matting. -->
       <div class="column">
-        <h2 class="title is-3">Matting</h2>
+        <h2 class="title is-3">Safe Planning</h2>
         <div class="columns is-centered">
           <div class="column content">
             <p>
               As a byproduct of our method, we can also solve the matting problem by ignoring
               samples that fall outside of a bounding box during rendering.
             </p>
-            <video id="matting-video" controls playsinline height="100%">
-              <source src="./static/videos/matting.mp4"
-                      type="video/mp4">
-            </video>
+            <img src="./static/images/PURR_teaser.png"
+            class="interpolation-image"
+            alt="Interpolate start reference image."/>
           </div>
 
         </div>

@@ -21,7 +21,7 @@ This repository is built off of [Nerfstudio](https://github.com/nerfstudio-proje
 * [cvxpy](https://github.com/cvxpy/cvxpy). This library is for solving the quadratic program. There is an option to use CVXPY itself (slower), or directly use CLARABEL (faster). CLARABEL is already included in CVXPY.
 
 ## Datasets
-Our datasets are hosted on a Google Drive (https://drive.google.com/drive/folders/11O7o5811NJIaSq5jC7dqwMteKWDD3QtL?usp=sharing). The scenes used in the paper are `flightroom`, `statues`, and `stonehenge`. The training data is in the `colmap` (for statues and flightroom) / `blender` (for stonehenge) folder, while the model is in `nerfacto`.
+Our datasets are hosted on a [Google Drive](https://drive.google.com/drive/folders/11O7o5811NJIaSq5jC7dqwMteKWDD3QtL?usp=sharing). The scenes used in the paper are `flightroom`, `statues`, and `stonehenge`. The training data is in the `colmap` (for statues and flightroom) / `blender` (for stonehenge) folder, while the model is in `nerfacto`.
 
 One way to ensure the repository can see the Nerfstudio model weights is to create a `data` folder and an `outputs` folder in the `catnips` folder. Then place the training data in the `data` folder, and the model weights in the `outputs` folder. 
 

@@ -157,9 +157,9 @@
     </div>
     <!--/ Matting. -->
   </div>
-  <h1 class="title has-text-centered">
+  <h2 class="title has-text-centered">
     CATNIPS is a guaranteed safe robot planning pipeline for navigation in Neural Radiance Fields.
-  </h1>
+  </h2>
 </section>
 
 <section class="section">
@@ -220,7 +220,6 @@
             class="interpolation-image"
             alt="Interpolate start reference image."/>
           </div>
-
         </div>
       </div>
     </div>
@@ -235,9 +234,8 @@
         <h3 class="title is-4">Corridor Generation</h3>
         <div class="content has-text-justified">
           <p>
-            We can also animate the scene by interpolating the deformation latent codes of two input
-            frames. Use the slider here to linearly interpolate between the left frame and the right
-            frame.
+            We first plan an initial feasible path through the PURR using a graph-based search like A* (a). Using the A* path as a seed, we grow box corridors around the path until they 
+            intersect with the PURR (b). The corridors "convexify" the regions of safe space, which facilitates optimal and fast trajectory optimization (c).
           </p>
           <img src="./static/images/planner_explainer.png"
           class="interpolation-image"
@@ -250,8 +248,8 @@
         <h3 class="title is-4">Spline Optimization</h3>
         <div class="content has-text-justified">
           <p>
-            Using <span class="dnerf">Nerfies</span>, you can re-render a video from a novel
-            viewpoint such as a stabilized camera by playing back the training deformations.
+            We formulate the planning problem as a quadratic program. Our objective is a rubber-band loss that produces smooth paths, and the constraints are polytopes 
+            representing the box segments of the corridor. 
           </p>
           <img src="./static/images/Paths_qualitative.png"
           class="interpolation-image"
@@ -276,10 +274,36 @@
           <p>
             Our proposed pipeline produces open-loop trajectories ...
           </p>
-          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+          <div class="columns is-centered">
+
+            <!-- Visual Effects. -->
+            <div class="column">
+              <div class="content">        
+                <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+                  <source src="./static/videos/OL1.mp4"
+                          type="video/mp4">
+                </video>
+              </div>
+            </div>
+            <!--/ Visual Effects. -->
+      
+            <!-- Matting. -->
+            <div class="column">
+              <div class="columns is-centered">
+                <div class="column content">
+                  <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/OL2.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
             <source src="./static/videos/OL1.mp4"
                     type="video/mp4">
-          </video>
+          </video> -->
         </div>
       </div>
       <!--/ Visual Effects. -->

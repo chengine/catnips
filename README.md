@@ -89,6 +89,7 @@ The outputs of the `run.py` scripts is a json containing a dictionary of paths, 
 To use your own datasets, simply train a Nerfstudio `nerfacto` model and follow the folder structure as illustrated above. If your images contain pixels that are transparent like in the case of synthetic scenes (i.e. the alpha value is 0), it is recommended to use the `instant-ngp-data` flag (e.g. `ns-train nerfacto --data {DATA} instant-ngp-data`) rather than `blender-data` or the default.
 
 ## Citation
+If you found CATNIPS useful, consider citing us! Thanks!
 ```
 @article{chen2024catnips,
   author={Chen, Timothy and Culbertson, Preston and Schwager, Mac},

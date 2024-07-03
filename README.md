@@ -11,8 +11,8 @@ in IEEE Transactions on Robotics (2024)
 
 <p align="center">
 
-  <h1 align="center"><img src="imgs/cat.jpg" width="25">CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes</h1>
-  <p align="center">
+  <h1 align="center"><img src="imgs/cat.jpg" width="25"> CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes</h1>
+  <p align="center"> 
     <a href="https://msl.stanford.edu/people/timchen"><strong>Timothy Chen</strong><sup>1</sup></a>
     ·
     <a href="https://www.its.caltech.edu/~pculbert/"><strong>Preston Culbertson</strong><sup>2</sup></a>

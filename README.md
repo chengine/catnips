@@ -30,9 +30,9 @@ in IEEE Transactions on Robotics (2024)
     <img src="./imgs/title.png" width="80%">
   </a>
 </p>
-<p align="center">
+<h1>
 A guaranteed safe robot planning pipeline for navigation in NeRFs
-</p>
+</h1>
 <p align="center">
 </p>
 <br>

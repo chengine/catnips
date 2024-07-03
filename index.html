@@ -157,9 +157,9 @@
     </div>
     <!--/ Matting. -->
   </div>
-  <h2 class="subtitle has-text-centered">
+  <h1 class="subtitle has-text-centered">
     Safety-critical robot planning in Neural Radiance Fields
-  </h2>
+  </h1>
 </section>
 
 <section class="section">
@@ -197,8 +197,8 @@
         <div class="content">
           <h2 class="title is-3">Probabilistic Formulation</h2>
           <p>
-            We equate a Neural Radiance Field (NeRF) to a Poisson Point Process (PPP). Using this formulation, we can 
-            rigorously quantify probabilistic safety.
+            We equate a Neural Radiance Field (NeRF) to a Poisson Point Process (PPP) by deriving an equivalent rendering equation for the PPP. We then propose a probabilistic safety
+            constraint built from the PPP and show that it can be computed solely from the NeRF.
           </p>
           <img src="./static/images/compare_GT_PPP.png"
           class="interpolation-image"
@@ -213,8 +213,8 @@
         <div class="columns is-centered">
           <div class="column content">
             <p>
-              Using our probabilistic formulation, we can create a probabilistically safe safety constraint. Then, we construct a voxel grid representation
-              of navigable space called an Unsafe Robot Region (PURR) to facilitate fast and safe trajectory optimization. 
+              Using probabilistically safe safety constraint, we construct a voxel grid representation
+              of navigable space called an Unsafe Robot Region (PURR). This representation facilitates fast and safe trajectory optimization. 
             </p>
             <img src="./static/images/purr_generate.png"
             class="interpolation-image"

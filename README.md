@@ -30,9 +30,9 @@ in IEEE Transactions on Robotics (2024)
     <img src="./imgs/title.png" width="80%">
   </a>
 </p>
-<h1 align="center">
+<h3 align="center">
 A guaranteed safe robot planning pipeline for navigation in NeRFs
-</h1>
+</h3>
 
 ## About
 CATNIPS reasons about probabilistic safety and planning within Neural Radiance Fields (NeRFs). We relate the NeRF density field to a Poisson Point Process and reason about probabilistic safety with respect to a PPP. Moreover, using safety constraints built from the PPP, we construct a voxel grid representation of navigable space and construct safe corridors through this space. We then solve for a smooth spline path using a quadratic program. The proposed pipeline is real-time. 

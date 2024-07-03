@@ -90,7 +90,7 @@ To use your own datasets, simply train a Nerfstudio `nerfacto` model and follow 
 
 ## Citation
 ```
-@ARTICLE{chen2024catnips,
+@article{chen2024catnips,
   author={Chen, Timothy and Culbertson, Preston and Schwager, Mac},
   journal={IEEE Transactions on Robotics}, 
   title={CATNIPS: Collision Avoidance Through Neural Implicit Probabilistic Scenes}, 

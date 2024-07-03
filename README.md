@@ -39,7 +39,7 @@ CATNIPS reasons about probabilistic safety and planning within Neural Radiance F
 
 <img src='imgs/teaser.png'/>
 
-## Quickstart
+## Dependencies
 This repository is built off of [Nerfstudio](https://github.com/nerfstudio-project/nerfstudio/tree/main). Please first follow the installation instructions there before installing any of the dependencies specifically for this repository. Once you have Nerfstudio installed in your Conda environment, install the following dependencies in that environment.
 
 * [dijkstra3d](https://github.com/seung-lab/dijkstra3d). This library is for planning A*.
